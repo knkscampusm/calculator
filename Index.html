@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2028학년도 시즌ZERO 성적순 전형 환산 등급 계산기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --teal:#3dbbb1; --teal-dark:#2a958c; --teal-soft:#e6f6f4;
+  --ink:#333; --sub:#6b6b6b; --line:#dcdcdc; --bg:#f0f0f0; --card:#fff;
+  --warn:#c0392b;
+  font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  color:var(--ink);
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);line-height:1.55;word-break:keep-all;-webkit-text-size-adjust:100%}
+.wrap{max-width:980px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:1.55rem;margin:0 0 18px;letter-spacing:-.02em}
+.lead{margin:0 0 12px;color:var(--sub);font-size:.95rem}
+.lead b{color:var(--ink)}
+.lead-note{font-size:.85rem}
+.nw{white-space:nowrap}
+
+button{font:inherit;font-size:.9rem;border-radius:6px;padding:9px 16px;min-height:42px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);touch-action:manipulation}
+button:hover{border-color:var(--teal)}
+button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+.ref-btn{min-height:34px;padding:0 12px;font-size:.82rem;border-color:var(--teal);color:var(--teal-dark);font-weight:600}
+.head-r{display:flex;align-items:center;gap:8px}
+.lead{margin-bottom:18px}
+
+/* 기준표 모달 */
+dialog{border:none;border-radius:12px;padding:18px;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.dlg-head h2{font-size:1.1rem;margin:0}
+.dlg-x{border:none;background:none;font-size:1.1rem;padding:6px 10px;color:var(--sub)}
+.dlg-desc{margin:0 0 14px;font-size:.85rem;color:var(--sub)}
+.dlg-desc .m-br{display:none}
+.ref{display:grid;grid-template-columns:1fr 1.3fr;gap:12px;align-items:stretch}
+.box{background:var(--card);border-radius:10px;overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column}
+.box h3{margin:0;background:var(--teal);color:#fff;font-size:.95rem;font-weight:600;padding:9px 14px}
+.box table{width:100%;flex:1;border-collapse:collapse;font-size:.92rem}
+.box td{padding:7px 14px;border-top:1px solid #eee}
+.box td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.box td.yr{color:var(--sub);white-space:nowrap}
+
+.notice{background:var(--teal-soft);border-left:4px solid var(--teal);padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:16px;font-size:.93rem}
+.notice p{margin:0}
+.notice p+p{margin-top:4px;color:var(--sub);font-size:.85rem}
+
+.rows-head{display:flex;align-items:center;justify-content:flex-end;margin:4px 0 8px}
+.rows-head span{font-size:.85rem;color:var(--sub);font-weight:600}
+.add-btn{width:38px;height:38px;min-height:0;padding:0;border-radius:50%;border:none;background:var(--teal);color:#fff;font-size:1.5rem;line-height:1;font-weight:500}
+.add-btn:hover{background:var(--teal-dark)}
+.rows{display:flex;flex-direction:column;gap:12px}
+.row{position:relative;padding-right:46px!important}
+.clr-btn{position:absolute;top:8px;right:8px;width:30px;height:30px;min-height:0;padding:0;border:none;border-radius:50%;background:none;color:#999;font-size:1rem;line-height:1}
+.clr-btn:hover{background:var(--bg);color:var(--ink)}
+.row{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;grid-template-columns:repeat(12,1fr);gap:10px 8px;align-items:end;transition:border-color .2s,box-shadow .2s}
+.row.best{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal)}
+.row .exam{grid-column:1/-1}
+.gcap{grid-column:1/-1;font-size:.75rem;color:var(--sub);margin:2px 0 -6px;font-weight:600}
+.seg-wrap{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--bg);border-radius:8px;padding:3px;gap:2px}
+.seg button{border:none;background:none;min-height:36px;padding:0 14px;border-radius:6px;color:var(--sub);font-size:.92rem}
+.seg button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg-t{flex:0 1 360px}.seg-t button{flex:1}
+.seg-t button.on{background:var(--teal);color:#fff}
+.seg button:disabled{opacity:.35}
+.seg-y button{min-height:30px;padding:0 10px;font-size:.78rem}
+.row .g{grid-column:span 2}.row .t{grid-column:span 3}
+.row .g{grid-column:span 1}
+.row .t{grid-column:span 3}
+.row .score{grid-column:span 2}
+.row .out{grid-column:span 4}
+.field label{display:block;font-size:.75rem;color:var(--sub);margin-bottom:3px;white-space:nowrap}
+.field select,.field input{width:100%;height:42px;border:1px solid var(--line);border-radius:6px;background:#fff;font:inherit;font-size:16px;padding:0 8px;color:var(--ink);-webkit-appearance:none;appearance:none}
+.field select{background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 10px center;padding-right:26px}
+.field input{text-align:center;font-variant-numeric:tabular-nums}
+.field select:focus,.field input:focus{outline:2px solid var(--teal);outline-offset:0;border-color:var(--teal)}
+.field.score input{background:#fafafa}
+.tg{display:flex;gap:6px}
+.tg select{flex:1;min-width:0}
+.tg input{flex:none;width:52px}
+.field .tg select{font-size:15px}
+.out{text-align:center;padding-bottom:2px}
+.out .label{font-size:.75rem;color:var(--sub)}
+.out .val{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;min-height:1.9rem}
+.out .val.msg{font-size:.78rem;font-weight:500;color:var(--warn);line-height:1.3;padding-top:4px}
+.out.sub .val{font-size:1.05rem;font-weight:600;color:var(--sub)}
+.row.fail .out .val{color:#aaa}
+/* 표준점수: 환산 등급 합이 같은 경우에만 표시 */
+.row:not(.need-std) .score,.row:not(.need-std) .out.sub,.row:not(.need-std) .std-hint{display:none}
+.std-hint{grid-column:1/-1;order:0;margin:-4px 0 0;font-size:.75rem;color:#a68a1b}
+.row:not(.need-std) .out{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;text-align:left;background:var(--bg);border-radius:6px;padding:8px 12px}
+.row:not(.need-std) .out .label{font-size:.85rem}
+.row:not(.need-std) .out .val{min-height:0}
+.row.need-std .score input{background:#fffbe6;border-color:#e6c84f}
+.elig{grid-column:1/-1;font-size:.85rem;border-radius:6px;padding:7px 10px;display:none}
+.elig.ok{display:block;background:var(--teal-soft);color:var(--teal-dark)}
+.elig.no{display:block;background:#fbeceb;color:var(--warn)}
+.badge{grid-column:1/-1;display:none;font-size:.82rem;color:var(--teal-dark);font-weight:600}
+.row.best .badge{display:block}
+
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.result{margin-top:22px;background:var(--card);border-radius:10px;border:1px solid var(--line);padding:18px 20px}
+.result .t{font-size:.85rem;color:var(--sub);margin:0 0 4px}
+.result .r{font-size:1.2rem;font-weight:700;margin:0}
+.result .r small{font-weight:500;color:var(--sub);font-size:.9rem}
+.result.fail .r{color:var(--warn)}
+.logo{margin-top:36px;text-align:center}
+.logo img{display:inline-block;height:auto;max-width:164px}
+.ver{margin:12px 0 0;text-align:right;font-size:.72rem;color:#aaa;font-variant-numeric:tabular-nums}
+.result .tip{margin:8px 0 0;font-size:.85rem;color:var(--sub)}
+
+/* 등급 칸 통일 (PC) */
+.row{grid-template-columns:repeat(3,64px) 206px 206px 1fr}
+.row .g{grid-column:auto}
+.row .t{grid-column:auto}
+.tg input{width:64px}
+.row .score{grid-column:span 3}
+.row .score + .score{grid-column:4 / 5}
+.row.need-std .out{grid-column:1 / 4}
+.row.need-std .out.sub{grid-column:4 / 6}
+
+@media (max-width:760px){
+  .wrap{padding:20px 12px 40px}
+  h1{font-size:1.3rem}
+  h1 span{display:block}
+  .lead{font-size:.9rem}
+  dialog{padding:16px}
+  .dlg-desc{white-space:nowrap;font-size:12.5px}
+  .dlg-desc .m-br{display:inline}
+  .ref{grid-template-columns:1fr;gap:10px}
+  .box h3{padding:7px 12px;font-size:.9rem}
+  .box td{padding:6px 12px}
+  .notice{padding:10px 12px;font-size:.88rem}
+  .row{grid-template-columns:repeat(6,1fr);gap:8px 6px;padding:12px}
+  .row{padding-right:12px!important}
+  .row .exam{padding-right:34px}
+  .clr-btn{top:6px;right:6px}
+  .row .exam,.row .t{grid-column:1/-1}
+  .seg-t{flex:1 1 100%}
+  .seg .lg{display:none}
+  .row .exam label,.row .t label{text-align:left}
+  .row .g{grid-column:span 2}
+  .row .g .u{display:none}
+  .row .score{grid-column:span 3}
+  .field label{text-align:center}
+  .field .tg select{font-size:16px}
+  .tg input{width:64px}
+  .row .out{grid-column:span 3;background:var(--bg);border-radius:6px;padding:6px 4px}
+  .actions button{flex:1}
+  .result{padding:14px 16px}
+  .result .r{font-size:1.05rem}
+  /* 등급 칸 통일 (모바일) */
+  .row{grid-template-columns:repeat(6,1fr)}
+  .row .g{grid-column:span 2}
+  .row .t{grid-column:1/-1}
+  .tg input{width:calc((100% - 12px) / 3)}
+  .row .score,.row .score + .score{grid-column:span 3}
+  .row.need-std .out,.row.need-std .out.sub{grid-column:span 3}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span class="h1a">2028학년도 시즌ZERO</span> <span class="h1b">성적순 전형 환산 등급 계산기</span></h1>
+
+  <dialog id="refDlg" aria-labelledby="refTitle">
+    <div class="dlg-head">
+      <h2 id="refTitle">환산 등급 합 계산 기준</h2>
+      <button type="button" class="dlg-x" id="refClose" aria-label="닫기">✕</button>
+    </div>
+    <p class="dlg-desc">[국어 × 1.05 + 수학 × 1.2 <br class="m-br">+ (영어 또는 탐구 중 낮은 등급) × 1]<br>+ 시험별 가산 점수</p>
+    <div class="ref">
+      <div class="box">
+        <h3>과목별 가중치</h3>
+        <table>
+          <tr><td>국어</td><td class="num">1.05</td></tr>
+          <tr><td>수학</td><td class="num">1.2</td></tr>
+          <tr><td>영어 또는 탐구</td><td class="num">1</td></tr>
+        </table>
+      </div>
+      <div class="box">
+        <h3>시험별 가산</h3>
+        <table>
+          <tr><td class="yr" rowspan="3">2027학년도</td><td>수능</td><td class="num">0</td></tr>
+          <tr><td>6월평가원</td><td class="num">1.5</td></tr>
+          <tr><td>9월평가원</td><td class="num">1</td></tr>
+          <tr><td class="yr" rowspan="3">2026학년도</td><td>수능</td><td class="num">1</td></tr>
+          <tr><td>6월평가원</td><td class="num">2</td></tr>
+          <tr><td>9월평가원</td><td class="num">2</td></tr>
+        </table>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="notice">
+    <p>2개 이상의 성적을 입력해 계산해 보시고, 본인에게 유리한 성적표(환산 등급 합이 낮은 것) 1개만 접수 시 업로드하시면 됩니다. <span class="nw">(반 배정과는 무관)</span></p>
+  </div>
+
+  <div class="rows-head">
+    <div class="head-r">
+      <button type="button" class="ref-btn" id="refOpen">가중치·가산 기준 보기</button>
+      <button type="button" class="add-btn" id="add" aria-label="성적 추가" title="성적 추가">+</button>
+    </div>
+  </div>
+  <div class="rows" id="rows"></div>
+
+  <footer class="logo"><img src="data:image/png;base64,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" alt="강남대성기숙 의대관" width="164" height="38"></footer>
+  <p class="ver">최종 수정일 2026.11.19</p>
+</div>
+
+<script>
+const W = { kor: 1.05, math: 1.2, etc: 1 };
+const EXAMS = [
+  ['2027학년도 수능', 0],
+  ['2027학년도 6월평가원', 1.5],
+  ['2027학년도 9월평가원', 1],
+  ['2026학년도 수능', 1],
+  ['2026학년도 6월평가원', 2],
+  ['2026학년도 9월평가원', 2]
+];
+const BONUS = Object.fromEntries(EXAMS);
+const GRADES = [['kor','국어'],['math','수학'],['eng','영어'],['t1','탐구1'],['t2','탐구2']];
+const SOC = ['생활과 윤리','윤리와 사상','한국지리','세계지리','동아시아사','세계사','경제','정치와 법','사회·문화'];
+const SCI = ['물리학Ⅰ','화학Ⅰ','생명과학Ⅰ','지구과학Ⅰ','물리학Ⅱ','화학Ⅱ','생명과학Ⅱ','지구과학Ⅱ'];
+const subjOptions = '<option value="">과목 선택</option>'
+  + `<optgroup label="사회탐구">${SOC.map(s => `<option>${s}</option>`).join('')}</optgroup>`
+  + `<optgroup label="과학탐구">${SCI.map(s => `<option>${s}</option>`).join('')}</optgroup>`;
+const DEFAULT_ROWS = ['', ''];
+const STORE_KEY = 'gradeCalc_v1';
+const MAX_ROWS = EXAMS.length;
+
+const rowsEl = document.getElementById('rows');
+const round2 = n => Math.round(n * 100) / 100;
+const fmt = n => String(round2(n));
+
+function addRow(exam = '') {
+  const row = document.createElement('div');
+  row.className = 'row';
+  const gIn = (k, l) => `<input data-k="${k}" class="grade" type="text" inputmode="numeric" maxlength="1" autocomplete="off" enterkeyhint="next" aria-label="${l} 등급" placeholder="등급">`;
+  let html = `<div class="field exam"><label>성적표 종류</label><select data-k="exam" hidden><option value="">시험 선택</option>${
+    EXAMS.map(([n]) => `<option value="${n}">${n}</option>`).join('')}</select>
+    <div class="seg-wrap"><div class="seg seg-y">${['2027','2026'].map(y => `<button type="button" data-y="${y}"${y==='2027'?' class="on"':''}>${y}학년도</button>`).join('')}</div>
+    <div class="seg seg-t">${['수능','6월평가원','9월평가원'].map(t => `<button type="button" data-t="${t}">${t.replace('평가원','<span class="lg"> 평가원</span>')}</button>`).join('')}</div></div></div>`;
+  html += `<div class="gcap">과목별 등급</div>`;
+  for (const [k, l] of GRADES.slice(0, 3)) html += `<div class="field g"><label>${l}</label>${gIn(k, l)}</div>`;
+  for (const [n, k] of [[1, 't1'], [2, 't2']]) html += `<div class="field t"><label>탐구${n}</label><div class="tg"><select data-k="sub${n}" aria-label="탐구${n} 과목">${subjOptions}</select>${gIn(k, '탐구' + n)}</div></div>`;
+  html += `<div class="field score"><label>국어 표준점수</label><input data-k="ks" class="std" type="text" inputmode="numeric" maxlength="3" autocomplete="off" enterkeyhint="next"></div>`;
+  html += `<div class="field score"><label>수학 표준점수</label><input data-k="ms" class="std" type="text" inputmode="numeric" maxlength="3" autocomplete="off" enterkeyhint="next"></div>`;
+  html += `<p class="std-hint">표준점수를 각각 입력해주세요</p>`;
+  html += `<div class="out"><div class="label">환산 등급 합</div><div class="val" data-o="sum"></div></div>`;
+  html += `<div class="out sub"><div class="label">국+수(1.2배) 표준점수 합</div><div class="val" data-o="std"></div></div>`;
+  html += `<div class="elig" data-o="elig"></div>`;
+  html += `<div class="badge">✔ 가장 유리한 성적표입니다</div>`;
+  html += `<button type="button" class="clr-btn" aria-label="이 성적 지우기" title="지우기">✕</button>`;
+  row.innerHTML = html;
+  row.querySelector('[data-k="exam"]').value = exam;
+  rowsEl.appendChild(row);
+  update();
+}
+
+function save() {
+  try {
+    const data = [...rowsEl.children].map(row =>
+      Object.fromEntries([...row.querySelectorAll('[data-k]')].map(el => [el.dataset.k, el.value])));
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+function restore() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (!Array.isArray(data) || !data.length) return false;
+    data.slice(0, MAX_ROWS).forEach(d => {
+      addRow();
+      const row = rowsEl.lastElementChild;
+      for (const [k, v] of Object.entries(d)) {
+        const el = row.querySelector(`[data-k="${k}"]`);
+        if (el) el.value = v;
+      }
+    });
+    update();
+    return true;
+  } catch (e) { return false; }
+}
+
+function readRow(row) {
+  const v = k => row.querySelector(`[data-k="${k}"]`).value;
+  const sub = [v('sub1'), v('sub2')];
+  return { el: row, exam: v('exam'), g: GRADES.map(([k]) => v(k)), sub,
+    names: ['국어', '수학', '영어', sub[0] || '탐구1', sub[1] || '탐구2'],
+    sci: [false, false, false, SCI.includes(sub[0]), SCI.includes(sub[1])], ks: v('ks'), ms: v('ms') };
+}
+
+// 지원 자격: 5과목 중 3과목 등급 합 최소값 (과탐 두 과목 응시 또는 선택 3과목에 과탐 포함 시 -1, 중복 없음)
+function checkElig(g, sci) {
+  const bothSci = sci[3] && sci[4];
+  let best = null;
+  for (let a = 0; a < 5; a++) for (let b = a + 1; b < 5; b++) for (let c = b + 1; c < 5; c++) {
+    const idx = [a, b, c];
+    const raw = g[a] + g[b] + g[c];
+    const ded = (bothSci || idx.some(i => sci[i])) ? 1 : 0;
+    const adj = raw - ded;
+    if (!best || adj < best.adj || (adj === best.adj && raw < best.raw)) best = { idx, raw, ded, adj };
+  }
+  return best;
+}
+
+function update() {
+  const rows = [...rowsEl.children].map(readRow);
+  const used = rows.map(r => r.exam).filter(Boolean);
+
+  rows.forEach(r => {
+    // 이미 고른 시험은 다른 행에서 선택 불가
+    r.el.querySelectorAll('[data-k="exam"] option').forEach(o => {
+      o.disabled = !!o.value && o.value !== r.exam && used.includes(o.value);
+    });
+    // 탐구1·2 같은 과목 선택 불가
+    [1, 2].forEach(n => {
+      const other = r.sub[2 - n];
+      r.el.querySelectorAll(`[data-k="sub${n}"] option`).forEach(o => { o.disabled = !!o.value && o.value === other; });
+    });
+  });
+
+  rows.forEach(r => {
+    if (r.exam) r.el.querySelectorAll('.seg-y button').forEach(b => b.classList.toggle('on', b.dataset.y === r.exam.slice(0, 4)));
+    const y = r.el.querySelector('.seg-y .on').dataset.y;
+    r.el.querySelectorAll('.seg-t button').forEach(b => {
+      const ex = `${y}학년도 ${b.dataset.t}`;
+      b.classList.toggle('on', ex === r.exam);
+      b.disabled = ex !== r.exam && used.includes(ex);
+    });
+  });
+  const done = [], failed = [];
+  rows.forEach(r => {
+    const sumEl = r.el.querySelector('[data-o="sum"]');
+    const stdEl = r.el.querySelector('[data-o="std"]');
+    const eligEl = r.el.querySelector('[data-o="elig"]');
+    r.el.classList.remove('best', 'fail');
+    r.el.classList.toggle('need-std', r.ks !== '' || r.ms !== '');
+    eligEl.className = 'elig';
+    sumEl.classList.remove('msg');
+    const filled = r.g.filter(x => x !== '').length;
+
+    if (r.ks !== '' && r.ms !== '') {
+      r.std = round2(Number(r.ks) + Number(r.ms) * 1.2);
+      stdEl.textContent = fmt(r.std);
+    } else { r.std = null; stdEl.textContent = ''; }
+
+    if (filled === 0) { sumEl.textContent = ''; return; }
+    if (!r.exam) { sumEl.textContent = '시험을 선택해 주세요'; sumEl.classList.add('msg'); return; }
+    if (filled < 5) { sumEl.textContent = '모든 등급을 입력해 주세요'; sumEl.classList.add('msg'); return; }
+
+    const [kor, math, eng, t1, t2] = r.g.map(Number);
+    r.sum = round2(kor * W.kor + math * W.math + Math.min(eng, t1, t2) * W.etc + BONUS[r.exam]);
+    sumEl.textContent = fmt(r.sum);
+
+    if (!r.sub[0] || !r.sub[1]) {
+      eligEl.classList.add('no');
+      eligEl.textContent = '탐구 과목을 선택하면 지원 자격을 확인합니다.';
+      return;
+    }
+    const e = checkElig(r.g.map(Number), r.sci);
+    if (e.adj <= 10) {
+      done.push(r);
+    } else {
+      eligEl.classList.add('no');
+      eligEl.textContent = '지원 자격을 충족하지 않습니다.';
+      r.el.classList.add('fail');
+      failed.push(r);
+    }
+  });
+
+  save();
+  if (done.length === 0) return;
+
+  const min = Math.min(...done.map(r => r.sum));
+  const tied = done.filter(r => r.sum === min);
+  if (tied.length > 1) tied.forEach(r => r.el.classList.add('need-std'));
+  let best = null;
+
+  if (tied.length === 1) best = tied[0];
+  else if (tied.every(r => r.std !== null)) {
+    const maxStd = Math.max(...tied.map(r => r.std));
+    const top = tied.filter(r => r.std === maxStd);
+    top.forEach(r => r.el.classList.add('best'));   // 표준점수 합까지 같으면 모두 표시
+    return;
+  } else return;   // 표준점수 입력 대기
+
+  best.el.classList.add('best');
+}
+
+// 입력 정리 + 다음 칸 자동 이동 (등급 1자리, 표준점수 3자리)
+rowsEl.addEventListener('input', e => {
+  const t = e.target;
+  let go = false;
+  if (t.matches('input.grade')) {
+    t.value = t.value.replace(/[^1-9]/g, '').slice(-1);
+    go = !!t.value;
+  } else if (t.matches('input.std')) {
+    t.value = t.value.replace(/[^0-9]/g, '').slice(0, 3);
+    go = t.value.length === 3;
+  }
+  update();
+  if (go) focusNext(t);
+});
+rowsEl.addEventListener('change', update);
+rowsEl.addEventListener('focusin', e => {
+  if (e.target.matches('input.grade, input.std')) e.target.select();
+});
+rowsEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('input.grade, input.std')) { e.preventDefault(); focusNext(e.target); }
+});
+function focusNext(el) {
+  const all = [...rowsEl.querySelectorAll('input.grade, input.std')].filter(x => x.offsetParent !== null);
+  const next = all[all.indexOf(el) + 1];
+  if (next) next.focus(); else el.blur();
+}
+
+rowsEl.addEventListener('click', e => {
+  const row = e.target.closest('.row'); if (!row) return;
+  const sel = row.querySelector('[data-k="exam"]');
+  const yb = e.target.closest('.seg-y button'), tb = e.target.closest('.seg-t button');
+  if (yb) {
+    row.querySelectorAll('.seg-y button').forEach(b => b.classList.toggle('on', b === yb));
+    if (sel.value) sel.value = sel.value.replace(/^\d{4}/, yb.dataset.y);
+    update();
+  } else if (tb) {
+    const y = row.querySelector('.seg-y .on').dataset.y;
+    const ex = `${y}학년도 ${tb.dataset.t}`;
+    sel.value = sel.value === ex ? '' : ex; update();
+  }
+});
+// 기준표 모달
+const dlg = document.getElementById('refDlg');
+document.getElementById('refOpen').addEventListener('click', () => dlg.showModal());
+document.getElementById('refClose').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+const addBtn = document.getElementById('add');
+addBtn.addEventListener('click', () => {
+  if (rowsEl.children.length < MAX_ROWS) addRow();
+  addBtn.disabled = rowsEl.children.length >= MAX_ROWS;
+});
+// ✕: 해당 성적 데이터 지우기 (추가한 카드는 카드째 삭제)
+rowsEl.addEventListener('click', e => {
+  const btn = e.target.closest('.clr-btn');
+  if (!btn) return;
+  const row = btn.closest('.row');
+  if (rowsEl.children.length > DEFAULT_ROWS.length) row.remove();
+  else row.querySelectorAll('[data-k]').forEach(el => { el.value = ''; });
+  addBtn.disabled = rowsEl.children.length >= MAX_ROWS;
+  update();
+});
+
+if (!restore()) DEFAULT_ROWS.forEach(e => addRow(e));
+addBtn.disabled = rowsEl.children.length >= MAX_ROWS;
+</script>
+</body>
+</html>
