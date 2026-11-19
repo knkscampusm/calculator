@@ -252,10 +252,10 @@ dialog.cfm{width:min(340px,calc(100vw - 32px));padding:22px 20px 16px;text-align
   </dialog>
 
   <dialog id="cfmDlg" class="cfm" aria-labelledby="cfmMsg">
-    <p id="cfmMsg" class="cfm-msg">시험을 바꾸면 입력한 등급이 지워집니다.<br>바꾸시겠어요?</p>
+    <p id="cfmMsg" class="cfm-msg">시험을 바꾸면 입력한 내용이 지워집니다.<br>바꾸시겠어요?</p>
     <div class="cfm-btns">
       <button type="button" id="cfmNo">취소</button>
-      <button type="button" id="cfmYes" class="cfm-yes">바꾸기</button>
+      <button type="button" id="cfmYes" class="cfm-yes">확인</button>
     </div>
   </dialog>
 
@@ -487,16 +487,18 @@ function askConfirm() {
     cfm.oncancel = e => { e.preventDefault(); done(false); };
     cfm.onclick = e => { if (e.target === cfm) done(false); };
     cfm.showModal();
-    document.getElementById('cfmNo').focus();
+    document.getElementById('cfmYes').focus();   // 스페이스·엔터 = 확인
   });
 }
 async function changeExam(row, next) {
   const sel = row.querySelector('[data-k="exam"]');
   if (next === sel.value) { update(); return; }
   const inputs = row.querySelectorAll('input.grade, input.std');
-  if ([...inputs].some(i => i.value !== '')) {
+  const sci = row.querySelector('[data-k="sci"]');
+  if ([...inputs].some(i => i.value !== '') || sci.value !== '') {
     if (!(await askConfirm())) { update(); return; }   // 취소: 원래 선택으로 복귀
     inputs.forEach(i => { i.value = ''; });
+    sci.value = '';                                    // 과탐 응시 개수도 초기화
   }
   sel.value = next;
   update();
