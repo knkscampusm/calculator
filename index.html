@@ -418,7 +418,8 @@ function update() {
   });
 
   save();
-  if (done.length === 0) return;
+  // 성적이 2개 이상 입력됐을 때만 비교 표시
+  if (done.length === 0 || done.length + failed.length < 2) return;
 
   const min = Math.min(...done.map(r => r.sum));
   const tied = done.filter(r => r.sum === min);
