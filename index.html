@@ -36,6 +36,12 @@ button:disabled{opacity:.45;cursor:default}
 /* 기준표 모달 */
 dialog{border:none;border-radius:12px;padding:18px;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.25)}
 dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog.cfm{width:min(340px,calc(100vw - 32px));padding:22px 20px 16px;text-align:center}
+.cfm-msg{margin:0 0 18px;font-size:.95rem;line-height:1.6}
+.cfm-btns{display:flex;gap:8px}
+.cfm-btns button{flex:1;font-weight:600}
+.cfm-yes{background:var(--teal);border-color:var(--teal);color:#fff}
+.cfm-yes:hover{background:var(--teal-dark)}
 .dlg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
 .dlg-head h2{font-size:1.1rem;margin:0}
 .dlg-x{border:none;background:none;font-size:1.1rem;padding:6px 10px;color:var(--sub)}
@@ -245,6 +251,14 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
     </div>
   </dialog>
 
+  <dialog id="cfmDlg" class="cfm" aria-labelledby="cfmMsg">
+    <p id="cfmMsg" class="cfm-msg">시험을 바꾸면 입력한 등급이 지워집니다.<br>바꾸시겠어요?</p>
+    <div class="cfm-btns">
+      <button type="button" id="cfmNo">취소</button>
+      <button type="button" id="cfmYes" class="cfm-yes">바꾸기</button>
+    </div>
+  </dialog>
+
   <div class="notice">
     <p>2개 이상의 성적을 입력해 계산해 보시고, 본인에게 유리한 성적표(환산 등급 합이 낮은 것) 1개만 접수 시 업로드하시면 됩니다. <span class="nw">(반 배정과는 무관)</span></p>
   </div>
@@ -293,7 +307,6 @@ function addRow(exam = '') {
     <div class="seg seg-t">${['수능','6월평가원','9월평가원'].map(t => `<button type="button" data-t="${t}">${t.replace('평가원','<span class="lg"> 평가원</span>')}</button>`).join('')}</div></div></div>`;
   html += `<div class="ghead"><span class="gcap-t">과목별 등급</span></div>`;
   for (const [k, l] of GRADES) html += `<div class="field g g-${k}"><label>${l}</label>${gIn(k, l)}</div>`;
-  html += `<p class="sci-hint">과탐 1개 응시: 과탐 등급은 탐구1에 입력해 주세요</p>`;
   html += `<div class="field score"><label>국어 표준점수</label><input data-k="ks" class="std" type="text" inputmode="numeric" maxlength="3" autocomplete="off" enterkeyhint="next"></div>`;
   html += `<div class="field score"><label>수학 표준점수</label><input data-k="ms" class="std" type="text" inputmode="numeric" maxlength="3" autocomplete="off" enterkeyhint="next"></div>`;
   html += `<p class="std-hint">표준점수를 각각 입력해주세요</p>`;
@@ -364,7 +377,10 @@ function update() {
     });
     // 과탐 응시 개수 버튼 + 탐구 라벨
     r.el.querySelectorAll('.seg-s button').forEach(b => b.classList.toggle('on', b.dataset.n === r.sciN));
-    r.el.classList.toggle('sci1', r.sciN === '1');
+    // 과탐 응시 개수에 따라 탐구 라벨 변경
+    const lab = { '': ['탐구1', '탐구2'], '0': ['사탐1', '사탐2'], '1': ['과탐', '사탐'], '2': ['과탐1', '과탐2'] }[r.sciN] || ['탐구1', '탐구2'];
+    r.el.querySelector('.g-t1 label').textContent = lab[0];
+    r.el.querySelector('.g-t2 label').textContent = lab[1];
   });
 
   rows.forEach(r => {
@@ -440,6 +456,7 @@ function update() {
 // 입력 정리 + 다음 칸 자동 이동 (등급 1자리, 표준점수 3자리)
 rowsEl.addEventListener('input', e => {
   const t = e.target;
+  if (t.matches('.ysel')) return;   // 학년도는 change에서 처리
   let go = false;
   if (t.matches('input.grade')) {
     t.value = t.value.replace(/[^1-9]/g, '').slice(-1);
@@ -453,11 +470,37 @@ rowsEl.addEventListener('input', e => {
 });
 rowsEl.addEventListener('change', e => {
   if (e.target.matches('.ysel')) {
-    const sel = e.target.closest('.row').querySelector('[data-k="exam"]');
-    if (sel.value) sel.value = sel.value.replace(/^\d{4}/, e.target.value);
+    const row = e.target.closest('.row');
+    const sel = row.querySelector('[data-k="exam"]');
+    if (sel.value) { changeExam(row, sel.value.replace(/^\d{4}/, e.target.value)); return; }
   }
   update();
 });
+
+// 시험 변경: 입력한 등급이 있으면 확인 후 지우고 변경
+const cfm = document.getElementById('cfmDlg');
+function askConfirm() {
+  return new Promise(res => {
+    const done = v => { cfm.close(); res(v); };
+    document.getElementById('cfmYes').onclick = () => done(true);
+    document.getElementById('cfmNo').onclick = () => done(false);
+    cfm.oncancel = e => { e.preventDefault(); done(false); };
+    cfm.onclick = e => { if (e.target === cfm) done(false); };
+    cfm.showModal();
+    document.getElementById('cfmNo').focus();
+  });
+}
+async function changeExam(row, next) {
+  const sel = row.querySelector('[data-k="exam"]');
+  if (next === sel.value) { update(); return; }
+  const inputs = row.querySelectorAll('input.grade, input.std');
+  if ([...inputs].some(i => i.value !== '')) {
+    if (!(await askConfirm())) { update(); return; }   // 취소: 원래 선택으로 복귀
+    inputs.forEach(i => { i.value = ''; });
+  }
+  sel.value = next;
+  update();
+}
 rowsEl.addEventListener('focusin', e => {
   if (e.target.matches('input.grade, input.std')) e.target.select();
 });
@@ -482,7 +525,7 @@ rowsEl.addEventListener('click', e => {
   if (tb) {
     const y = row.querySelector('.ysel').value;
     const ex = `${y}학년도 ${tb.dataset.t}`;
-    sel.value = sel.value === ex ? '' : ex; update();
+    changeExam(row, sel.value === ex ? '' : ex);
   }
 });
 // 기준표 모달
